@@ -6,13 +6,14 @@ karas.inject.requestAnimationFrame = function(cb) {
 };
 
 class Root extends karas.Root {
-  appendTo(ctx) {
+  appendTo(dom) {
+    this.__dom = dom;
     this.__children = karas.builder.initRoot(this.__cd, this);
     this.__initProps();
     this.__root = this;
     this.cache = !!this.props.cache;
     this.__refreshLevel = karas.refresh.level.REFLOW;
-    this.__ctx = ctx;
+    this.__ctx = dom.getContext('2d');
     this.__renderMode = karas.mode.CANVAS;
     this.__defs = {
       clear() {},
@@ -36,22 +37,7 @@ const LOADING = karas.inject.LOADING;
 const LOADED = karas.inject.LOADED;
 
 karas.inject.measureImg = function(url, cb, optinos = {}) {
-  let { root, width = 0, height = 0 } = optinos;
-  let ctx = root.ctx;
-  if(url.indexOf('data:') === 0) {
-    let img = ctx.createImage();
-    img.onload = function() {
-      cb({
-        success: true,
-        width: width,
-        height: height,
-        url,
-        source: img,
-      });
-    };
-    img.src = url;
-    return;
-  }
+  let { root: { dom, ctx } } = optinos;
   let cache = IMG[url] = IMG[url] || {
     state: INIT,
     task: [],
@@ -65,35 +51,30 @@ karas.inject.measureImg = function(url, cb, optinos = {}) {
   else {
     cache.state = LOADING;
     cache.task.push(cb);
-    my.getImageInfo({
-      src: url,
-      success: function(res) {
-        let img = ctx.createImage();
-        img.onload = function() {
-          cache.state = LOADED;
-          cache.success = true;
-          cache.width = res.width;
-          cache.height = res.height;
-          cache.source = img;
-          cache.url = url;
-          let list = cache.task.splice(0);
-          list.forEach(cb => cb(cache));
-        };
-        img.src = url;
-      },
-      fail: function() {
-        cache.state = LOADED;
-        cache.success = false;
-        cache.url = url;
-        let list = cache.task.splice(0);
-        list.forEach(cb => cb(cache));
-      },
-    });
+    let img = dom.createImage();
+    img.onload = function() {
+      cache.state = LOADED;
+      cache.success = true;
+      cache.width = img.width;
+      cache.height = img.height;
+      cache.source = img;
+      cache.url = url;
+      let list = cache.task.splice(0);
+      list.forEach(cb => cb(cache));
+    };
+    img.onerror = function() {
+      cache.state = LOADED;
+      cache.success = false;
+      cache.url = url;
+      let list = cache.task.splice(0);
+      list.forEach(cb => cb(cache));
+    }
+    img.src = url;
   }
 };
 
 karas.inject.isDom = function(o) {
-  return o && karas.util.isFunction(o.arc);
+  return o && karas.util.isFunction(o.createImage);
 }
 
 const CANVAS = {};
