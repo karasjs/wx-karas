@@ -5,6 +5,7 @@ A karas runtime on Weixin.
 
 ## INSTALL
 ```
+npm install karas
 npm install wx-karas
 ```
 
