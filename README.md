@@ -12,6 +12,8 @@ npm install wx-karas
 
 ## Demo
 ```jsx
+// 小程序
+import 'karas';
 import karas from 'wx-karas';
 
 Page({
@@ -46,4 +48,31 @@ Page({
       });
   }
 });
+```
+```jsx
+// 小游戏
+import 'karas';
+import karas from 'wx-karas';
+
+const canvas = wx.createCanvas();
+let width = canvas.width;
+let height = canvas.height;
+width *= 2;
+height *= 2;
+canvas.width = width;
+canvas.height = height;
+
+karas.parse(
+  {
+    tagName: 'canvas',
+    props: {
+      width: width,
+      height: height,
+    },
+    children: [
+      'Hello world'
+    ]
+  },
+  canvas
+);
 ```
