@@ -71,7 +71,7 @@ function _get() {
   return _get.apply(this, arguments);
 }
 
-var version = "0.81.0";
+var version = "0.81.1";
 
 var mode = karas.mode,
   ca = karas.ca,

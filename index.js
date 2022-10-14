@@ -78,7 +78,7 @@
     return _get.apply(this, arguments);
   }
 
-  var version = "0.81.0";
+  var version = "0.81.1";
 
   var mode = karas__default["default"].mode,
     ca = karas__default["default"].ca,
