@@ -1,16 +1,12 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('karas')) :
   typeof define === 'function' && define.amd ? define(['karas'], factory) :
-  (global = global || self, global.karas = factory(global.karas));
-}(this, (function (karas) { 'use strict';
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.karas = factory(global.karas));
+})(this, (function (karas) { 'use strict';
 
-  karas = karas && Object.prototype.hasOwnProperty.call(karas, 'default') ? karas['default'] : karas;
+  function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
-  function _classCallCheck(instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
-    }
-  }
+  var karas__default = /*#__PURE__*/_interopDefaultLegacy(karas);
 
   function _defineProperties(target, props) {
     for (var i = 0; i < props.length; i++) {
@@ -21,18 +17,18 @@
       Object.defineProperty(target, descriptor.key, descriptor);
     }
   }
-
   function _createClass(Constructor, protoProps, staticProps) {
     if (protoProps) _defineProperties(Constructor.prototype, protoProps);
     if (staticProps) _defineProperties(Constructor, staticProps);
+    Object.defineProperty(Constructor, "prototype", {
+      writable: false
+    });
     return Constructor;
   }
-
   function _inherits(subClass, superClass) {
     if (typeof superClass !== "function" && superClass !== null) {
       throw new TypeError("Super expression must either be null or a function");
     }
-
     subClass.prototype = Object.create(superClass && superClass.prototype, {
       constructor: {
         value: subClass,
@@ -40,148 +36,180 @@
         configurable: true
       }
     });
+    Object.defineProperty(subClass, "prototype", {
+      writable: false
+    });
     if (superClass) _setPrototypeOf(subClass, superClass);
   }
-
   function _getPrototypeOf(o) {
-    _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) {
+    _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function _getPrototypeOf(o) {
       return o.__proto__ || Object.getPrototypeOf(o);
     };
     return _getPrototypeOf(o);
   }
-
   function _setPrototypeOf(o, p) {
-    _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) {
+    _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) {
       o.__proto__ = p;
       return o;
     };
-
     return _setPrototypeOf(o, p);
   }
-
-  function _isNativeReflectConstruct() {
-    if (typeof Reflect === "undefined" || !Reflect.construct) return false;
-    if (Reflect.construct.sham) return false;
-    if (typeof Proxy === "function") return true;
-
-    try {
-      Date.prototype.toString.call(Reflect.construct(Date, [], function () {}));
-      return true;
-    } catch (e) {
-      return false;
+  function _superPropBase(object, property) {
+    while (!Object.prototype.hasOwnProperty.call(object, property)) {
+      object = _getPrototypeOf(object);
+      if (object === null) break;
     }
+    return object;
   }
-
-  function _assertThisInitialized(self) {
-    if (self === void 0) {
-      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  function _get() {
+    if (typeof Reflect !== "undefined" && Reflect.get) {
+      _get = Reflect.get.bind();
+    } else {
+      _get = function _get(target, property, receiver) {
+        var base = _superPropBase(target, property);
+        if (!base) return;
+        var desc = Object.getOwnPropertyDescriptor(base, property);
+        if (desc.get) {
+          return desc.get.call(arguments.length < 3 ? target : receiver);
+        }
+        return desc.value;
+      };
     }
-
-    return self;
+    return _get.apply(this, arguments);
   }
 
-  function _possibleConstructorReturn(self, call) {
-    if (call && (typeof call === "object" || typeof call === "function")) {
-      return call;
-    }
+  var version = "0.81.0";
 
-    return _assertThisInitialized(self);
-  }
-
-  function _createSuper(Derived) {
-    var hasNativeReflectConstruct = _isNativeReflectConstruct();
-
-    return function _createSuperInternal() {
-      var Super = _getPrototypeOf(Derived),
-          result;
-
-      if (hasNativeReflectConstruct) {
-        var NewTarget = _getPrototypeOf(this).constructor;
-
-        result = Reflect.construct(Super, arguments, NewTarget);
-      } else {
-        result = Super.apply(this, arguments);
-      }
-
-      return _possibleConstructorReturn(this, result);
-    };
-  }
-
-  var version = "0.58.0";
-
-  karas.inject.requestAnimationFrame = function (cb) {
-    setTimeout(cb, 1000 / 60);
-  };
-
+  var mode = karas__default["default"].mode,
+    ca = karas__default["default"].ca,
+    util = karas__default["default"].util,
+    inject = karas__default["default"].inject;
+  var RootList = [];
   var Root = /*#__PURE__*/function (_karas$Root) {
     _inherits(Root, _karas$Root);
-
-    var _super = _createSuper(Root);
-
     function Root() {
-      _classCallCheck(this, Root);
-
-      return _super.apply(this, arguments);
+      return _karas$Root.apply(this, arguments) || this;
     }
-
     _createClass(Root, [{
       key: "appendTo",
       value: function appendTo(dom) {
+        RootList.push(this);
         this.__dom = dom;
-        this.__children = karas.builder.initRoot(this.__cd, this);
-
+        this.__isDestroyed = false;
         this.__initProps();
-
-        this.__root = this;
-        this.cache = !!this.props.cache;
-        this.__refreshLevel = karas.refresh.level.REFLOW;
-        this.__ctx = dom.getContext('2d');
-        this.__renderMode = karas.mode.CANVAS;
-        this.__defs = {
-          clear: function clear() {}
-        };
-        this.refresh(null, true);
+        var tagName = this.tagName;
+        var params = Object.assign({}, ca, this.props.contextAttributes);
+        if (tagName === 'canvas') {
+          this.__ctx = dom.getContext('2d');
+          this.__renderMode = mode.CANVAS;
+        } else if (tagName === 'webgl') {
+          // 优先手动指定，再自动判断，最后兜底
+          var gl,
+            webgl2 = this.props.webgl2;
+          if (!util.isNil(webgl2)) {
+            if (webgl2) {
+              gl = dom.getContext('webgl2', params);
+            }
+            if (!gl) {
+              gl = dom.getContext('webgl', params);
+            }
+            this.__ctx = gl;
+          } else {
+            gl = this.__ctx = dom.getContext('webgl2', params) || dom.getContext('webgl', params);
+          }
+          this.__initShader(gl);
+          this.__renderMode = mode.WEBGL;
+        }
+        this.draw(true);
+        if (this.__dom.__root && this.__dom.__root instanceof Root) {
+          this.__dom.__root.destroy();
+        }
+        this.__dom.__root = this;
+      }
+    }, {
+      key: "destroy",
+      value: function destroy() {
+        _get(_getPrototypeOf(Root.prototype), "destroy", this).call(this);
+        var i = RootList.indexOf(this);
+        if (i > -1) {
+          RootList.splice(i, 1);
+        }
       }
     }]);
-
     return Root;
-  }(karas.Root); // Root引用指过来
-
-
-  var createVd = karas.createVd;
-
-  karas.createVd = function (tagName, props, children) {
-    if (['canvas', 'svg'].indexOf(tagName) > -1) {
+  }(karas__default["default"].Root); // Root引用指过来
+  var createVd = karas__default["default"].createVd;
+  karas__default["default"].createVd = function (tagName, props, children) {
+    if (['canvas', 'svg', 'webgl'].indexOf(tagName) > -1) {
       return new Root(tagName, props, children);
     }
-
     return createVd(tagName, props, children);
   };
-
-  var IMG = karas.inject.IMG;
-  var INIT = karas.inject.INIT;
-  var LOADING = karas.inject.LOADING;
-  var LOADED = karas.inject.LOADED;
-
-  karas.inject.measureImg = function (url, cb) {
-    var optinos = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-    var _optinos$root = optinos.root,
-        dom = _optinos$root.dom,
-        ctx = _optinos$root.ctx;
+  if (typeof requestAnimationFrame === 'undefined') {
+    inject.requestAnimationFrame = function (cb) {
+      if (!cb || !RootList[0]) {
+        return;
+      }
+      return RootList[0].__dom.requestAnimationFrame(cb);
+    };
+    inject.cancelAnimationFrame = function (id) {
+      if (!RootList[0]) {
+        return;
+      }
+      return RootList[0].__dom.cancelAnimationFrame(id);
+    };
+  }
+  var IMG = inject.IMG;
+  var INIT = inject.INIT;
+  var LOADING = inject.LOADING;
+  var LOADED = inject.LOADED;
+  var FONT = inject.FONT;
+  inject.measureImg = function (url, cb) {
+    if (!RootList.length && !wx.createImage) {
+      return;
+    }
+    if (Array.isArray(url)) {
+      if (!url.length) {
+        return cb && cb();
+      }
+      var count = 0;
+      var len = url.length;
+      var list = [];
+      url.forEach(function (item, i) {
+        inject.measureImg(item, function (cache) {
+          list[i] = cache;
+          if (++count === len) {
+            cb && cb(list);
+          }
+        });
+      });
+      return;
+    } else if (!url || !util.isString(url)) {
+      inject.error('Measure img invalid: ' + url);
+      cb && cb({
+        state: LOADED,
+        success: false,
+        url: url
+      });
+      return;
+    }
     var cache = IMG[url] = IMG[url] || {
       state: INIT,
       task: []
     };
-
     if (cache.state === LOADED) {
-      cb(cache);
+      cb && cb(cache);
     } else if (cache.state === LOADING) {
-      cache.task.push(cb);
+      cb && cache.task.push(cb);
     } else {
       cache.state = LOADING;
-      cache.task.push(cb);
-      var img = dom.createImage();
-
+      cb && cache.task.push(cb);
+      var img;
+      if (wx.createImage) {
+        img = wx.createImage();
+      } else {
+        img = RootList[0].__dom.createImage();
+      }
       img.onload = function () {
         cache.state = LOADED;
         cache.success = true;
@@ -194,8 +222,7 @@
           return cb(cache);
         });
       };
-
-      img.onerror = function () {
+      img.onerror = function (e) {
         cache.state = LOADED;
         cache.success = false;
         cache.url = url;
@@ -204,80 +231,133 @@
           return cb(cache);
         });
       };
-
       img.src = url;
     }
   };
-
-  karas.inject.isDom = function (o) {
-    return o && karas.util.isFunction(o.createImage);
+  inject.isDom = function (o) {
+    return o && (o.tagName || o.createImage);
   };
-
   var CANVAS = {};
-  var CANVAS_LIST = [];
-  var WEBGL_LIST = [];
-
-  function cache(key, width, height, hash, message) {
+  function offscreenCanvas(key, width, height, message) {
     var o;
-
     if (!key) {
-      var target = hash === CANVAS ? CANVAS_LIST : WEBGL_LIST;
-
-      if (target.length) {
-        o = target.pop();
-      } else {
-        o = wx.createOffscreenCanvas(width, height);
-      }
-    } else if (!hash[key]) {
-      o = hash[key] = wx.createOffscreenCanvas(width, height);
+      o = wx.createOffscreenCanvas ? wx.createOffscreenCanvas({
+        type: '2d',
+        width: width,
+        height: height
+      }) : wx.createCanvas();
+    } else if (!CANVAS[key]) {
+      o = CANVAS[key] = wx.createOffscreenCanvas ? wx.createOffscreenCanvas({
+        type: '2d',
+        width: width,
+        height: height
+      }) : wx.createCanvas();
     } else {
-      o = hash[key];
+      o = CANVAS[key];
     }
-
-    o.width = width;
-    o.height = height;
+    if (!wx.createOffscreenCanvas) {
+      o.width = width;
+      o.height = height;
+    }
+    var ctx = o.getContext('2d');
     return {
       canvas: o,
-      ctx: hash === CANVAS ? o.getContext('2d') : o.getContext('webgl') || o.getContext('experimental-webgl'),
-      draw: function draw() {// 空函数，仅对小程序提供hook特殊处理，flush缓冲
-      },
+      ctx: ctx,
       available: true,
       release: function release() {
-        if (hash === CANVAS) {
-          CANVAS_LIST.push(this.canvas);
-        } else {
-          WEBGL_LIST.push(this.canvas);
-        }
-
-        this.canvas = null;
-        this.ctx = null;
+        ctx.globalAlpha = 1;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, width, height);
+        this.available = false;
       }
     };
   }
-
-  function cacheCanvas(key, width, height, message) {
-    return cache(key, width, height, CANVAS);
-  }
-
-  karas.inject.hasCacheCanvas = function (key) {
+  inject.hasOffscreenCanvas = function (key) {
     return key && CANVAS.hasOwnProperty(key);
   };
-
-  karas.inject.getCacheCanvas = function (width, height, key, message) {
-    return cacheCanvas(key, width, height);
+  inject.getOffscreenCanvas = function (width, height, key, message) {
+    return offscreenCanvas(key, width, height);
   };
-
-  karas.inject.releaseCacheCanvas = function (o) {
-    CANVAS_LIST.push(o);
+  inject.loadFont = function (fontFamily, url, cb) {
+    if (!wx.loadFontFace) {
+      return;
+    }
+    if (util.isFunction(url)) {
+      cb = url;
+      url = fontFamily;
+    }
+    if (Array.isArray(url)) {
+      if (!url.length) {
+        return cb();
+      }
+      var count = 0;
+      var len = url.length;
+      var list = [];
+      url.forEach(function (item, i) {
+        inject.loadFont(item.fontFamily, item.url, function (cache) {
+          list[i] = cache;
+          if (++count === len) {
+            cb(list);
+          }
+        });
+      });
+      return;
+    } else if (!url || !util.isString(url)) {
+      inject.error('Load font invalid: ' + url);
+      cb && cb({
+        state: LOADED,
+        success: false,
+        url: url
+      });
+      return;
+    }
+    if (!fontFamily) {
+      fontFamily = url;
+    }
+    var cache = FONT[url] = FONT[url] || {
+      state: INIT,
+      task: []
+    };
+    if (cache.state === LOADED) {
+      cb && cb(cache);
+    } else if (cache.state === LOADING) {
+      cb && cache.task.push(cb);
+    } else {
+      var success = function success() {
+        cache.state = LOADED;
+        cache.success = true;
+        cache.url = url;
+        var list = cache.task.splice(0);
+        list.forEach(function (cb) {
+          return cb(cache, ab);
+        });
+      };
+      var error = function error() {
+        cache.state = LOADED;
+        cache.success = false;
+        cache.url = url;
+        var list = cache.task.splice(0);
+        list.forEach(function (cb) {
+          return cb(cache);
+        });
+      };
+      cache.state = LOADING;
+      cb && cache.task.push(cb);
+      if (url instanceof ArrayBuffer) {
+        success(url);
+      } else {
+        wx.loadFontFace({
+          family: fontFamily,
+          source: "url(\"".concat(url, "\")"),
+          success: success,
+          fail: error
+        });
+      }
+    }
   };
+  karas__default["default"].wxVersion = version;
 
-  karas.inject.delCacheCanvas = function (key) {
-    key && delete CANVAS[key];
-  };
+  return karas__default["default"];
 
-  karas.wxVersion = version;
-
-  return karas;
-
-})));
+}));
 //# sourceMappingURL=index.js.map
