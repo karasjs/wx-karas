@@ -7,7 +7,7 @@ function _defineProperties(target, props) {
     descriptor.enumerable = descriptor.enumerable || false;
     descriptor.configurable = true;
     if ("value" in descriptor) descriptor.writable = true;
-    Object.defineProperty(target, descriptor.key, descriptor);
+    Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor);
   }
 }
 function _createClass(Constructor, protoProps, staticProps) {
@@ -70,13 +70,28 @@ function _get() {
   }
   return _get.apply(this, arguments);
 }
+function _toPrimitive(input, hint) {
+  if (typeof input !== "object" || input === null) return input;
+  var prim = input[Symbol.toPrimitive];
+  if (prim !== undefined) {
+    var res = prim.call(input, hint || "default");
+    if (typeof res !== "object") return res;
+    throw new TypeError("@@toPrimitive must return a primitive value.");
+  }
+  return (hint === "string" ? String : Number)(input);
+}
+function _toPropertyKey(arg) {
+  var key = _toPrimitive(arg, "string");
+  return typeof key === "symbol" ? key : String(key);
+}
 
-var version = "0.81.1";
+var version = "0.86.0";
 
 var mode = karas.mode,
   ca = karas.ca,
   util = karas.util,
-  inject = karas.inject;
+  inject = karas.inject,
+  frame = karas.animate.frame;
 var RootList = [];
 var Root = /*#__PURE__*/function (_karas$Root) {
   _inherits(Root, _karas$Root);
@@ -118,6 +133,8 @@ var Root = /*#__PURE__*/function (_karas$Root) {
         this.__dom.__root.destroy();
       }
       this.__dom.__root = this;
+      frame.removeRoot(this);
+      frame.addRoot(this);
     }
   }, {
     key: "destroy",
@@ -231,7 +248,7 @@ inject.isDom = function (o) {
   return o && (o.tagName || o.createImage);
 };
 var CANVAS = {};
-function offscreenCanvas(key, width, height, message) {
+function offscreenCanvas(key, width, height, message, contextAttributes) {
   var o;
   if (!key) {
     o = wx.createOffscreenCanvas ? wx.createOffscreenCanvas({
@@ -252,7 +269,10 @@ function offscreenCanvas(key, width, height, message) {
     o.width = width;
     o.height = height;
   }
-  var ctx = o.getContext('2d');
+  var ctx = o.getContext('2d', contextAttributes);
+  if (!ctx) {
+    inject.error('Total canvas memory use exceeds the maximum limit');
+  }
   return {
     canvas: o,
     ctx: ctx,
@@ -268,8 +288,8 @@ function offscreenCanvas(key, width, height, message) {
 inject.hasOffscreenCanvas = function (key) {
   return key && CANVAS.hasOwnProperty(key);
 };
-inject.getOffscreenCanvas = function (width, height, key, message) {
-  return offscreenCanvas(key, width, height);
+inject.getOffscreenCanvas = function (width, height, key, message, contextAttributes) {
+  return offscreenCanvas(key, width, height, message, contextAttributes);
 };
 inject.loadFont = function (fontFamily, url, cb) {
   if (!wx.loadFontFace) {

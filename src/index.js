@@ -1,7 +1,7 @@
 import karas from 'karas';
 import { version } from '../package.json';
 
-const { mode, ca, util, inject } = karas;
+const { mode, ca, util, inject, animate: { frame } } = karas;
 
 const RootList = [];
 
@@ -41,6 +41,8 @@ class Root extends karas.Root {
       this.__dom.__root.destroy();
     }
     this.__dom.__root = this;
+    frame.removeRoot(this);
+    frame.addRoot(this);
   }
 
   destroy() {
@@ -160,7 +162,7 @@ inject.isDom = function(o) {
 
 const CANVAS = {};
 
-function offscreenCanvas(key, width, height, message) {
+function offscreenCanvas(key, width, height, message, contextAttributes) {
   let o;
   if(!key) {
     o = wx.createOffscreenCanvas ? wx.createOffscreenCanvas({ type: '2d', width, height }) : wx.createCanvas();
@@ -175,7 +177,10 @@ function offscreenCanvas(key, width, height, message) {
     o.width = width;
     o.height = height;
   }
-  let ctx = o.getContext('2d');
+  let ctx = o.getContext('2d', contextAttributes);
+  if(!ctx) {
+    inject.error('Total canvas memory use exceeds the maximum limit');
+  }
   return {
     canvas: o,
     ctx,
@@ -193,8 +198,8 @@ inject.hasOffscreenCanvas = function(key) {
   return key && CANVAS.hasOwnProperty(key);
 };
 
-inject.getOffscreenCanvas = function(width, height, key, message) {
-  return offscreenCanvas(key, width, height, message);
+inject.getOffscreenCanvas = function(width, height, key, message, contextAttributes) {
+  return offscreenCanvas(key, width, height, message, contextAttributes);
 };
 
 inject.loadFont = function(fontFamily, url, cb) {
